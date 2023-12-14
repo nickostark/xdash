@@ -10,9 +10,9 @@ services:
     restart: always
 
   panel:
-    image: panel:1.0.0 
+    image: panel:3.0.0
     ports:
-      - "8080:8080"
+      - "9090:9090"
     depends_on:
       - mongodb
     restart: always
@@ -29,6 +29,6 @@ services:
     restart: always
 
 
-  
+
 volumes:
   mongoData:
