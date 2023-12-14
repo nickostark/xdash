@@ -10,25 +10,37 @@ services:
     restart: always
 
   panel:
-    image: panel:3.0.0
+    image: panel:4.0.0
     ports:
       - "9090:9090"
     depends_on:
       - mongodb
     restart: always
 
-  
   nginx:
     image: nginx:latest
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+#      - ./certbot/conf:/etc/letsencrypt  
+#      - ./certbot/www:/var/www/certbot 
     depends_on:
       - panel
     restart: always
 
 
+#  certbot:
+#    image: certbot/certbot:latest
+#    volumes:
+#      - ./certbot/conf:/etc/letsencrypt
+#      - ./certbot/www:/var/www/certbot
+#    command: certonly --webroot --webroot-path=/var/www/certbot -d panel.cogni$
+#    depends_on:
+#      - nginx
+#    restart: "no"
 
 volumes:
   mongoData:
+  certbot:
