@@ -2,7 +2,7 @@ version: '3'
 services:
 
   mongodb:
-    image: myregistry.local:80/mongo:latest
+    image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
@@ -19,7 +19,7 @@ services:
 
   
   nginx:
-    image: myregistry.local:80/library/nginx:latest
+    image: nginx:latest
     ports:
       - "80:80"
     volumes:
