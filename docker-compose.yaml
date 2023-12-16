@@ -10,7 +10,7 @@ services:
     restart: always
 
   panel:
-    image: panel:5.0.0
+    image: panel:6.0.0
     ports:
       - "9090:9090"
     depends_on:
