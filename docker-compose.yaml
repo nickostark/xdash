@@ -24,22 +24,23 @@ services:
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-#      - ./certbot/conf:/etc/letsencrypt  
-#      - ./certbot/www:/var/www/certbot 
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
     depends_on:
       - panel
     restart: always
 
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
-#  certbot:
-#    image: certbot/certbot:latest
-#    volumes:
-#      - ./certbot/conf:/etc/letsencrypt
-#      - ./certbot/www:/var/www/certbot
-#    command: certonly --webroot --webroot-path=/var/www/certbot -d panel.cogni$
-#    depends_on:
-#      - nginx
-#    restart: "no"
+    command: certonly --webroot --webroot-path=/var/www/certbot -d panel.cognim$
+    depends_on:
+      - nginx
+    restart: "no"
 
 volumes:
   mongoData:
