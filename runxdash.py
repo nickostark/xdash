@@ -211,13 +211,13 @@ def show_posts(data):
 
     df = pd.DataFrame(
         {
-            "post": data['Tweet text'],
-            "impressions": data['impressions'],
-            "replies": data['replies'],
-            "profile_clicks": data['user profile clicks'],
-            "likes": data['likes'],
-            "retweets": data['retweets'],
-            "link": data['Tweet permalink'],
+            "post": data['Post text'],
+            "impressions": data['Impressions'],
+            "replies": data['Replies'],
+            "profile_clicks": data['Profile visits'],
+            "likes": data['Likes'],
+            "retweets": data['Reposts'],
+            "link": data['Post Link'],
         }
     )
 
