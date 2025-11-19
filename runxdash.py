@@ -386,7 +386,7 @@ def show_graph_circle(accounts):
 def run_xdash():#username):
     # Design the navigation bar
     with st.sidebar:  
-        st.image("https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3BmLXMxMjQtYWstMjYxNV8yLmpwZw.jpg")
+        # st.image("https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3BmLXMxMjQtYWstMjYxNV8yLmpwZw.jpg")
         st.title(f"Welcome:wave:") #{username}
         choice = st.radio("Navigation", ["Upload", "Time Analysis", "Posts Summary", "Top Comments", "My Golden Connections", "Performance Comparison"])
         st.divider()
