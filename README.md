@@ -63,8 +63,18 @@ streamlit run app.py
 2. Enter the OTP sent via email. Verified sessions receive a signed cookie for short-lived re-authentication.
 3. Use the **Upload** tab to provide the X/Twitter CSV export. The file is stored as `source_data.csv` so subsequent tabs can use it.
 
+### Demo Mode (No Authentication)
+If you only want to explore the dashboard locally without connecting to MySQL, MongoDB, SMTP, or WordPress subscribers, enable demo mode. This skips the entire login/OTP workflow and signs you in with a placeholder email.
+
+```bash
+export XDASH_DEMO_MODE=1          # any truthy value works (1, true, yes, on)
+export XDASH_DEMO_EMAIL=me@local  # optional label shown inside the app
+streamlit run app.py
+```
+
+In demo mode the cookie, database, and SMTP environment variables are ignored, so you can upload a CSV immediately after the app loads.
+
 ### CSV Requirements
-- The dataset must include the columns referenced in `runxdash.py`: `Tweet text`, `Tweet id`, `impressions`, `engagements`, `likes`, `replies`, `retweets`, `user profile clicks`, `media views`, `Tweet permalink`, and `time` (all are available in the CSV file downloaded from X/Twitter Analytics)
 - Dates should be parseable by `pandas.to_datetime`.
 - Remove personal data you do not wish to analyze prior to upload.
 
@@ -117,4 +127,3 @@ Ensure environment variables/secrets are injected via compose overrides or an or
 - **Authentication never succeeds** – Confirm the WordPress DB is reachable from your machine and the user has an active subscription that has not expired.
 - **No OTP email** – Verify SMTP credentials and allow-list the sender address. Check MongoDB logs to ensure codes are written.
 - **Charts empty** – Ensure your CSV columns match expected names (case sensitive) and the `time` column covers at least two dates for comparisons.
-

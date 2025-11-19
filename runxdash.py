@@ -9,6 +9,25 @@ import pytz
 import requests
 from streamlit_agraph import agraph, Node, Edge, Config
 
+from dataset_columns import COLUMNS
+
+AVAILABLE_METRICS = [
+    COLUMNS.impressions,
+    COLUMNS.engagements,
+    COLUMNS.likes,
+    COLUMNS.replies,
+    COLUMNS.retweets,
+    COLUMNS.user_profile_clicks,
+    COLUMNS.media_views,
+]
+
+COMMENT_METRICS = [
+    COLUMNS.impressions,
+    COLUMNS.engagements,
+    COLUMNS.likes,
+    COLUMNS.replies,
+    COLUMNS.user_profile_clicks,
+]
 
 
 
@@ -28,18 +47,18 @@ def remove_outliers_iqr(data, column_name):
 
 def preprocess(dataset):
     # Sort the dataset by 'time' column in descending order
-    dataset = dataset.sort_values(by='impressions', ascending=False)
+    dataset = dataset.sort_values(by=COLUMNS.impressions, ascending=False)
     
     # Drop duplicates in 'Tweet id' column, keeping the first occurrence (highest value)
-    dataset = dataset.drop_duplicates(subset='Tweet id', keep='first')
+    dataset = dataset.drop_duplicates(subset=COLUMNS.tweet_id, keep='first')
     
     # Remove duplicates and handle missing values if needed
-    comment_df = dataset[dataset['Tweet text'].str.startswith('@')]
-    post_df = dataset[~dataset['Tweet text'].str.startswith('@')]
+    comment_df = dataset[dataset[COLUMNS.tweet_text].str.startswith('@')]
+    post_df = dataset[~dataset[COLUMNS.tweet_text].str.startswith('@')]
 
-    dataset['time'] = pd.to_datetime(dataset['time'])
-    post_df['time'] = pd.to_datetime(post_df['time'])
-    comment_df['time'] = pd.to_datetime(comment_df['time'])
+    dataset[COLUMNS.time] = pd.to_datetime(dataset[COLUMNS.time])
+    post_df[COLUMNS.time] = pd.to_datetime(post_df[COLUMNS.time])
+    comment_df[COLUMNS.time] = pd.to_datetime(comment_df[COLUMNS.time])
     
     return dataset, post_df, comment_df
     
@@ -48,19 +67,20 @@ def preprocess(dataset):
 def pick_timeframes(all_df):
     st.subheader("How Has Your :blue[Performance] Changed?", divider='rainbow')
     st.markdown("Select ANY two :blue[Timeframes] to see a comparison of your performance. The resulting percentages will show your performance during the :blue[**first timeframe relative to the second**].")
-    min_date_allowed = pd.to_datetime(all_df['time']).min()
-    max_date_allowed = pd.to_datetime(all_df['time']).max()
+    time_values = pd.to_datetime(all_df[COLUMNS.time])
+    min_date_allowed = time_values.min()
+    max_date_allowed = time_values.max()
 
     # Midpoint of the available date range
-    midpoint_date = pd.to_datetime(all_df['time']).min() + (pd.to_datetime(all_df['time']).max() - pd.to_datetime(all_df['time']).min()) / 2
+    midpoint_date = min_date_allowed + (max_date_allowed - min_date_allowed) / 2
 
     start_date1 = midpoint_date.date()#pd.to_datetime(df['time']).min().to_pydatetime().date() 
-    end_date1 = pd.to_datetime(all_df['time']).max().date()
+    end_date1 = max_date_allowed.date()
     
     timeframe1 = st.date_input("Pick the first timeframe", value=[start_date1, end_date1], 
                   min_value=min_date_allowed, max_value=max_date_allowed)
 
-    start_date2 = pd.to_datetime(all_df['time']).min().date() 
+    start_date2 = min_date_allowed.date() 
     # `end_date2` should start 1 day before the `midpoint_date`
     end_date2 = (midpoint_date - pd.Timedelta(days=1)).date()#pd.to_datetime(df['time']).max().to_pydatetime().date()
     
@@ -78,27 +98,27 @@ def performance_comparison(all_df, posts, comments, available_metrics, timeframe
     date2_start, date2_end = timeframe2
     
     # All data
-    df_date1 = all_df[(all_df['time'].dt.date >= date1_start) & (all_df['time'].dt.date <= date1_end)]
-    df_date2 = all_df[(all_df['time'].dt.date >= date2_start) & (all_df['time'].dt.date <= date2_end)]
+    df_date1 = all_df[(all_df[COLUMNS.time].dt.date >= date1_start) & (all_df[COLUMNS.time].dt.date <= date1_end)]
+    df_date2 = all_df[(all_df[COLUMNS.time].dt.date >= date2_start) & (all_df[COLUMNS.time].dt.date <= date2_end)]
 
     # Posts data
-    posts_date1 = posts[(posts['time'].dt.date >= date1_start) & (posts['time'].dt.date <= date1_end)]
-    posts_date2 = posts[(posts['time'].dt.date >= date2_start) & (posts['time'].dt.date <= date2_end)]
+    posts_date1 = posts[(posts[COLUMNS.time].dt.date >= date1_start) & (posts[COLUMNS.time].dt.date <= date1_end)]
+    posts_date2 = posts[(posts[COLUMNS.time].dt.date >= date2_start) & (posts[COLUMNS.time].dt.date <= date2_end)]
 
     # Comments data
-    comments_date1 = comments[(comments['time'].dt.date >= date1_start) & (comments['time'].dt.date <= date1_end)]
-    comments_date2 = comments[(comments['time'].dt.date >= date2_start) & (comments['time'].dt.date <= date2_end)]
+    comments_date1 = comments[(comments[COLUMNS.time].dt.date >= date1_start) & (comments[COLUMNS.time].dt.date <= date1_end)]
+    comments_date2 = comments[(comments[COLUMNS.time].dt.date >= date2_start) & (comments[COLUMNS.time].dt.date <= date2_end)]
 
     # Form Performance Comparison DataFrame
     performance_comparison_data = []
 
     # Comments count
-    num_comments_date1 = comments_date1['Tweet text'].count()
-    num_comments_date2 = comments_date2['Tweet text'].count()
+    num_comments_date1 = comments_date1[COLUMNS.tweet_text].count()
+    num_comments_date2 = comments_date2[COLUMNS.tweet_text].count()
 
     # Num of Posts
-    num_posts_date1 = posts_date1['Tweet text'].count()
-    num_posts_date2 = posts_date2['Tweet text'].count()
+    num_posts_date1 = posts_date1[COLUMNS.tweet_text].count()
+    num_posts_date2 = posts_date2[COLUMNS.tweet_text].count()
 
     
     # Work out the changes
@@ -156,7 +176,9 @@ def performance_comparison(all_df, posts, comments, available_metrics, timeframe
     
 # --- Time Analysis --- 
 def time_analysis(data_for_time_analysis, tz_selector):
-    time_by_impressions = data_for_time_analysis.groupby(pd.to_datetime(data_for_time_analysis['time']).dt.hour)[['impressions', 'engagements', 'user profile clicks']].mean()
+    time_group = pd.to_datetime(data_for_time_analysis[COLUMNS.time]).dt.hour
+    metrics = [COLUMNS.impressions, COLUMNS.engagements, COLUMNS.user_profile_clicks]
+    time_by_impressions = data_for_time_analysis.groupby(time_group)[metrics].mean()
     
 
     ############
@@ -164,9 +186,9 @@ def time_analysis(data_for_time_analysis, tz_selector):
     average_chart = pd.DataFrame(
        {
            "Hour": time_by_impressions.index,
-           "Impressions": time_by_impressions['impressions'].round(2),
-           "Engagements": time_by_impressions['engagements'].round(2),
-           "Profile Visits": time_by_impressions['user profile clicks'].round(2),
+           "Impressions": time_by_impressions[COLUMNS.impressions].round(2),
+           "Engagements": time_by_impressions[COLUMNS.engagements].round(2),
+           "Profile Visits": time_by_impressions[COLUMNS.user_profile_clicks].round(2),
        }
     )
 
@@ -176,11 +198,10 @@ def time_analysis(data_for_time_analysis, tz_selector):
 # --- best_times_to_post ---
 def best_times_to_post(data, metric_selector, tz_selector):
     # Convert `time` to the user-selected timezone
-    data['time'] = pd.to_datetime(data['time']).dt.tz_convert(pytz.timezone(tz_selector))
+    data[COLUMNS.time] = pd.to_datetime(data[COLUMNS.time]).dt.tz_convert(pytz.timezone(tz_selector))
 
-    time_of_day_avg = data.groupby(data['time'].dt.hour)[metric_selector].mean()
-    #time_of_day_avg = data.groupby(pd.to_datetime(data['time']).dt.hour)[metric].mean()
-    day_of_week_avg = data.groupby(pd.to_datetime(data['time']).dt.dayofweek)[metric_selector].mean()
+    time_of_day_avg = data.groupby(data[COLUMNS.time].dt.hour)[metric_selector].mean()
+    day_of_week_avg = data.groupby(pd.to_datetime(data[COLUMNS.time]).dt.dayofweek)[metric_selector].mean()
 
     #st.header('Best :blue[Times/Days] To Post:sunglasses:')
     
@@ -211,13 +232,13 @@ def show_posts(data):
 
     df = pd.DataFrame(
         {
-            "post": data['Post text'],
-            "impressions": data['Impressions'],
-            "replies": data['Replies'],
-            "profile_clicks": data['Profile visits'],
-            "likes": data['Likes'],
-            "retweets": data['Reposts'],
-            "link": data['Post Link'],
+            "post": data[COLUMNS.post_text],
+            "impressions": data[COLUMNS.post_impressions],
+            "replies": data[COLUMNS.post_replies],
+            "profile_clicks": data[COLUMNS.post_profile_visits],
+            "likes": data[COLUMNS.post_likes],
+            "retweets": data[COLUMNS.post_reposts],
+            "link": data[COLUMNS.post_link],
         }
     )
 
@@ -264,8 +285,8 @@ def show_top_comments(sorted_df):
         
     df = pd.DataFrame(
         {
-            "comment": sorted_df['Tweet text'],
-            "link": sorted_df['Tweet permalink'],
+            "comment": sorted_df[COLUMNS.tweet_text],
+            "link": sorted_df[COLUMNS.tweet_permalink],
         }
     )
     
@@ -285,15 +306,15 @@ def show_top_comments(sorted_df):
 # --- Interacted Accounts Analysis Function ---
 def show_top_accounts_in_circle(metric_selector, comment_df):
     # Extract the usernames user has mentioned
-    mentioned_usernames_data = comment_df['Tweet text'].str.extractall(r'@(\w+)')[0].unique().tolist()
+    mentioned_usernames_data = comment_df[COLUMNS.tweet_text].str.extractall(r'@(\w+)')[0].unique().tolist()
 
     url_prefix = 'https://x.com/'
 
     # Calculate Total Metric for each username
     accounts_metric_data = []
     for username in mentioned_usernames_data:
-        total_metric = comment_df.loc[comment_df['Tweet text'].str.contains(username), metric_selector].sum()
-        mention_count = comment_df.loc[comment_df['Tweet text'].str.contains(username), metric_selector].count()
+        total_metric = comment_df.loc[comment_df[COLUMNS.tweet_text].str.contains(username), metric_selector].sum()
+        mention_count = comment_df.loc[comment_df[COLUMNS.tweet_text].str.contains(username), metric_selector].count()
         accounts_metric_data.append({'Username': username, 'Total Metric': total_metric, 'Mention Count': mention_count})
 
     most_engaged_accounts = pd.DataFrame(accounts_metric_data).sort_values(by='Total Metric', ascending=False)
@@ -407,9 +428,9 @@ def run_xdash():#username):
         data_not_found = 0
     
         # Clean the data
-        #no_outlier = remove_outliers_iqr(df, 'impressions')
+        #no_outlier = remove_outliers_iqr(df, COLUMNS.impressions)
         all_data, post_df, comment_df = preprocess(df)
-        available_metrics = ["impressions", "engagements", "likes","replies", "retweets", "user profile clicks", "media views"]
+        available_metrics = AVAILABLE_METRICS
         timezones = pytz.all_timezones
         
         # Default Timezone in the dataset
@@ -445,7 +466,7 @@ def run_xdash():#username):
         data_for_time_analysis = None
         if discard_outliers:
             st.write("Outliers are :red[DISCARDED] for all charts:ok_hand:")
-            data_for_time_analysis = remove_outliers_iqr(all_data, 'impressions')
+            data_for_time_analysis = remove_outliers_iqr(all_data, COLUMNS.impressions)
         else:
             data_for_time_analysis = all_data
         ################################################
@@ -479,7 +500,7 @@ def run_xdash():#username):
             st.markdown("6. You can go further and host or co-host a space around the topics that have gained a lot of interest.")
             
         
-        metric_selector = st.selectbox("Choose a Metric", ["impressions", "engagements", "likes","replies", "user profile clicks"])
+        metric_selector = st.selectbox("Choose a Metric", COMMENT_METRICS)
     
         # Widget for user-defined `n_top_posts`
         n_top_comments = st.number_input("Insert the number of top comments you'd like to see", value=None, step=1, placeholder="Type a number...")
@@ -501,7 +522,7 @@ def run_xdash():#username):
             st.markdown("2. Accounts sorted based on :green[user profile clicks] are the ones that have brought you the :green[highest] traffic.")
             st.markdown("3. Add the top accounts to a :blue[list], turn on the :bell:, comment on their posts as soon as they publish")
         
-        metric_selector = st.selectbox("Choose a Metric", ["impressions", "engagements", "likes","replies", "user profile clicks"])
+        metric_selector = st.selectbox("Choose a Metric", COMMENT_METRICS)
     
         show_top_accounts_in_circle(metric_selector, comment_df)
     
@@ -515,9 +536,3 @@ def run_xdash():#username):
         button_clicked = st.button("Show Me How I did!")
         if button_clicked:
             performance_comparison(all_data, post_df, comment_df, available_metrics, timeframe1, timeframe2)
-
-
-
-
-
-

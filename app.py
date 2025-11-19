@@ -11,19 +11,38 @@ def _required_env(name):
     return value
 
 
-cookie_name = _required_env("XDASH_COOKIE_NAME")
-cookie_key = _required_env("XDASH_COOKIE_KEY")
+def _is_truthy(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
-auth = Authenticate.Authenticate(cookie_name, cookie_key, cookie_expiry_days=0.01)
 
-email, auth_status = auth.login()
+def _enable_demo_mode(email: str):
+    """Bypass authentication so the dashboard can be explored locally."""
+    st.session_state["auth_status"] = True
+    st.session_state["email"] = email
+    st.session_state["logout"] = False
+    st.session_state["email_found"] = True
+    st.info(f"Demo mode enabled. Signed in locally as {email}.")
+
+
+DEMO_MODE = _is_truthy(os.getenv("XDASH_DEMO_MODE"))
+DEMO_EMAIL = os.getenv("XDASH_DEMO_EMAIL") or "demo@xdash.local"
+
+auth = None
+
+if DEMO_MODE:
+    _enable_demo_mode(DEMO_EMAIL)
+else:
+    cookie_name = _required_env("XDASH_COOKIE_NAME")
+    cookie_key = _required_env("XDASH_COOKIE_KEY")
+    auth = Authenticate.Authenticate(cookie_name, cookie_key, cookie_expiry_days=0.01)
+    auth.login()
 
 
 # --- Check the Authentication Status ---
 
-if st.session_state.auth_status:
+if st.session_state.get("auth_status"):
     run_xdash()
-    auth.logout("Log out", "sidebar")
-    #if os.path.exists("source_data.csv"):
-        #os.remove("source_data.csv")
-
+    if auth is not None:
+        auth.logout("Log out", "sidebar")
