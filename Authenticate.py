@@ -12,8 +12,6 @@ import pytz
 from streamlit_agraph import agraph, Node, Edge, Config
 import mysql.connector
 import time
-#import inspect
-#st.write(inspect.getsource(stauth.Authenticate.login))
 
 from database_handling import wp_db_query, send_verification_code, check_code, check_recent_otp
 
@@ -25,7 +23,6 @@ class Authenticate:
         self.key = key
         self.cookie_expiry_days = cookie_expiry_days
         self.cookie_manager = stx.CookieManager()
-        #self.exp_date = None
 
         print('In Constructor:')
         if 'email_found' not in st.session_state:
@@ -73,7 +70,6 @@ class Authenticate:
                             st.session_state.auth_status = True
                             print(f'auth_status <- {st.session_state.auth_status}')
                             print('---------------------------')
-                            #st.write('checking cookie')
 
 
                             
@@ -135,11 +131,8 @@ class Authenticate:
                             minutes, seconds = divmod(int(remaining), 60)
                             formatted_time = f"{minutes:02d}:{seconds:02d}"
                             st.error(f'You can request a new code in {formatted_time}.')
-                        
-                        #st.write('HERE?')
                 if st.session_state.email_found:
                     #st.write(f'st.session_state.email_found: {st.session_state.email_found}')
-                    #st.text_input('something')
                     placeholder = st.empty()
                     verification_form = placeholder.form("Verification")
                     verification_form.subheader("Verification")
