@@ -5,12 +5,12 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class DatasetColumns:
     # Common columns
-    time: str = "time"
-    tweet_id: str = "Tweet id"
-    tweet_text: str = "Tweet text"
-    tweet_permalink: str = "Tweet permalink"
+    time: str = "Date"
+    tweet_id: str = "Post id"
+    tweet_text: str = "Post text"
+    tweet_permalink: str = "Post Link"
 
-    # Post-level columns (as provided by the CSV export)
+    # Post-level columns
     post_text: str = "Post text"
     post_link: str = "Post Link"
     post_impressions: str = "Impressions"
@@ -20,13 +20,19 @@ class DatasetColumns:
     post_reposts: str = "Reposts"
 
     # Metric columns used across analytics
-    impressions: str = "impressions"
-    engagements: str = "engagements"
-    likes: str = "likes"
-    replies: str = "replies"
-    retweets: str = "retweets"
-    user_profile_clicks: str = "user profile clicks"
-    media_views: str = "media views"
+    impressions: str = "Impressions"
+    engagements: str = "Engagements"
+    likes: str = "Likes"
+    replies: str = "Replies"
+    retweets: str = "Reposts"
+    user_profile_clicks: str = "Profile visits"
+    media_views: str = "Detail Expands"
+    bookmarks: str = "Bookmarks"
+    shares: str = "Shares"
+    new_follows: str = "New follows"
+    url_clicks: str = "URL Clicks"
+    hashtag_clicks: str = "Hashtag Clicks"
+    permalink_clicks: str = "Permalink Clicks"
 
 
 COLUMNS = DatasetColumns()

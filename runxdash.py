@@ -53,8 +53,10 @@ def preprocess(dataset):
     dataset = dataset.drop_duplicates(subset=COLUMNS.tweet_id, keep='first')
     
     # Remove duplicates and handle missing values if needed
-    comment_df = dataset[dataset[COLUMNS.tweet_text].str.startswith('@')]
-    post_df = dataset[~dataset[COLUMNS.tweet_text].str.startswith('@')]
+    tweet_text = dataset[COLUMNS.tweet_text].fillna("")
+    comment_mask = tweet_text.str.startswith('@')
+    comment_df = dataset[comment_mask]
+    post_df = dataset[~comment_mask]
 
     dataset[COLUMNS.time] = pd.to_datetime(dataset[COLUMNS.time])
     post_df[COLUMNS.time] = pd.to_datetime(post_df[COLUMNS.time])
@@ -198,10 +200,17 @@ def time_analysis(data_for_time_analysis, tz_selector):
 # --- best_times_to_post ---
 def best_times_to_post(data, metric_selector, tz_selector):
     # Convert `time` to the user-selected timezone
-    data[COLUMNS.time] = pd.to_datetime(data[COLUMNS.time]).dt.tz_convert(pytz.timezone(tz_selector))
+    time_series = pd.to_datetime(data[COLUMNS.time], errors='coerce')
+    timezone = pytz.timezone(tz_selector)
+    try:
+        time_series = time_series.dt.tz_localize('UTC')
+    except TypeError:
+        # Already timezone-aware
+        pass
+    time_series = time_series.dt.tz_convert(timezone)
 
-    time_of_day_avg = data.groupby(data[COLUMNS.time].dt.hour)[metric_selector].mean()
-    day_of_week_avg = data.groupby(pd.to_datetime(data[COLUMNS.time]).dt.dayofweek)[metric_selector].mean()
+    time_of_day_avg = data.groupby(time_series.dt.hour)[metric_selector].mean()
+    day_of_week_avg = data.groupby(time_series.dt.dayofweek)[metric_selector].mean()
 
     #st.header('Best :blue[Times/Days] To Post:sunglasses:')
     
@@ -305,16 +314,18 @@ def show_top_comments(sorted_df):
 # --- End of Content Analysis Function ---
 # --- Interacted Accounts Analysis Function ---
 def show_top_accounts_in_circle(metric_selector, comment_df):
+    comment_text = comment_df[COLUMNS.tweet_text].fillna("")
     # Extract the usernames user has mentioned
-    mentioned_usernames_data = comment_df[COLUMNS.tweet_text].str.extractall(r'@(\w+)')[0].unique().tolist()
+    mentioned_usernames_data = comment_text.str.extractall(r'@(\w+)')[0].unique().tolist()
 
     url_prefix = 'https://x.com/'
 
     # Calculate Total Metric for each username
     accounts_metric_data = []
     for username in mentioned_usernames_data:
-        total_metric = comment_df.loc[comment_df[COLUMNS.tweet_text].str.contains(username), metric_selector].sum()
-        mention_count = comment_df.loc[comment_df[COLUMNS.tweet_text].str.contains(username), metric_selector].count()
+        username_mask = comment_text.str.contains(username, regex=False)
+        total_metric = comment_df.loc[username_mask, metric_selector].sum()
+        mention_count = comment_df.loc[username_mask, metric_selector].count()
         accounts_metric_data.append({'Username': username, 'Total Metric': total_metric, 'Mention Count': mention_count})
 
     most_engaged_accounts = pd.DataFrame(accounts_metric_data).sort_values(by='Total Metric', ascending=False)
@@ -453,27 +464,13 @@ def run_xdash():#username):
         st.warning("Upload your data, then we'll get to the analytics.")
     elif choice == "Time Analysis":
         st.markdown("<h1 style='text-align: center; color: white;'>Time Analysis</h1>", unsafe_allow_html=True)
-        #st.title("Time Analysis")
-        st.subheader("Best :blue[Times/Days] To Post")
-        timezone_selector = st.selectbox("Choose Your Timezone", timezones, index=timezones.index(default_timezone),) #placeholder='Choose an option...',)
-        metric_selector = st.selectbox("Choose a Metric", available_metrics)
-    
-        ################################################
-        # Outlier discard Toggle
-        discard_outliers = st.toggle('Discard Outliers')
-    
-        # Take care of the `discard_outliers` toggle and set the data
-        data_for_time_analysis = None
-        if discard_outliers:
-            st.write("Outliers are :red[DISCARDED] for all charts:ok_hand:")
-            data_for_time_analysis = remove_outliers_iqr(all_data, COLUMNS.impressions)
-        else:
-            data_for_time_analysis = all_data
-        ################################################
-        best_times_to_post(data_for_time_analysis, metric_selector, timezone_selector)
-        st.subheader("Average Performance")
-        time_analysis(data_for_time_analysis, timezone_selector)
-    
+        st.warning(
+            "The latest X Analytics CSV export no longer includes the original timestamp column—"
+            "only the calendar date is provided. Because the heatmaps and charts in this tab rely "
+            "on hour-level data, we're keeping the Time Analysis tab off until the platform restores"
+            "the timestamps."
+        )
+
     #%%%%%%%%%%%%%%%%%%%%%% CHOICE 2
     elif choice == "Posts Summary":
         st.title("Posts Summary")

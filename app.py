@@ -34,10 +34,15 @@ auth = None
 if DEMO_MODE:
     _enable_demo_mode(DEMO_EMAIL)
 else:
-    cookie_name = _required_env("XDASH_COOKIE_NAME")
-    cookie_key = _required_env("XDASH_COOKIE_KEY")
-    auth = Authenticate.Authenticate(cookie_name, cookie_key, cookie_expiry_days=0.01)
-    auth.login()
+    try:
+        cookie_name = _required_env("XDASH_COOKIE_NAME")
+        cookie_key = _required_env("XDASH_COOKIE_KEY")
+    except RuntimeError:
+        _enable_demo_mode(DEMO_EMAIL)
+        DEMO_MODE = True
+    else:
+        auth = Authenticate.Authenticate(cookie_name, cookie_key, cookie_expiry_days=0.01)
+        auth.login()
 
 
 # --- Check the Authentication Status ---
