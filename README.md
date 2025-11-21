@@ -1,4 +1,14 @@
-# 𝕏Dash
+---
+title: 𝕏Dash
+emoji: 🚀
+colorFrom: blue
+colorTo: green
+sdk: streamlit
+sdk_version: "1.32.0"
+app_file: app.py
+pinned: false
+---
+
 Authenticated X/Twitter analytics dashboard that compares performance, highlights best posting times, and visualizes engagement metrics from tweet datasets.
 
 ## Features
