@@ -416,6 +416,14 @@ def show_graph_circle(accounts):
 
 
 def run_xdash():#username):
+    # Keep uploads scoped to a single browser session
+    if "upload_cleanup_done" not in st.session_state:
+        if os.path.exists("source_data.csv"):
+            os.remove("source_data.csv")
+        st.session_state["upload_cleanup_done"] = True
+
+    df = st.session_state.get("uploaded_df")
+
     # Design the navigation bar
     with st.sidebar:  
         # st.image("https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3BmLXMxMjQtYWstMjYxNV8yLmpwZw.jpg")
@@ -430,12 +438,17 @@ def run_xdash():#username):
         st.markdown("Tell me about your experience with :red[𝕏]Dash [here](%s)"%feedback_form_url)
         
 
-    
-    
-    # Check if the data exists
+    if choice == "Upload":
+        st.title("Personalized :red[𝕏]Dash")
+        #st.title("Upload your 𝕏 data for Analysis")
+        dataset = st.file_uploader("Upload your csv data here to get started.")
+        if dataset:
+            df = pd.read_csv(dataset, index_col=None)
+            st.session_state["uploaded_df"] = df
+            st.dataframe(df)
+
     data_not_found = 1
-    if os.path.exists("source_data.csv"):
-        df = pd.read_csv("source_data.csv", index_col=None)
+    if df is not None:
         data_not_found = 0
     
         # Clean the data
@@ -446,16 +459,6 @@ def run_xdash():#username):
         
         # Default Timezone in the dataset
         default_timezone = 'UTC'
-    # Radio options functionality
-    if choice == "Upload":
-        st.title("Personalized :red[𝕏]Dash")
-        #st.title("Upload your 𝕏 data for Analysis")
-        dataset = st.file_uploader("Upload your csv data here to get started.")
-        if dataset:
-            df = pd.read_csv(dataset, index_col=None)
-            # Make the dataset accessible across the app
-            df.to_csv("source_data.csv", index=None)
-            st.dataframe(df)
     
     
         

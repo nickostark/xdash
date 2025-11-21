@@ -15,7 +15,7 @@ Authenticated X/Twitter analytics dashboard that compares performance, highlight
 
 - Two-step authentication that checks paying subscribers in a WordPress/MySQL database and confirms the session via email-delivered OTP codes stored in MongoDB.
 - Multi-tab Streamlit experience covering upload, time analysis, post summaries, comment leaderboards, golden connections visualized with `streamlit-agraph`, and timeframe-based performance comparisons.
-- CSV ingestion workflow that persists the uploaded file as `source_data.csv`, deduplicates tweets, splits posts vs. comments, and powers metric aggregations such as impressions, engagements, profile clicks, likes, replies, retweets, and media views.
+- CSV ingestion workflow that stays in memory per browser session (no files written to disk), deduplicates tweets, splits posts vs. comments, and powers metric aggregations such as impressions, engagements, profile clicks, likes, replies, retweets, and media views.
 - Container-friendly deployment with a Python 3.10 Streamlit image, optional MongoDB service, and an nginx + certbot edge defined in `docker-compose.yaml`.
 - Email utility built on `smtplib` for OTP delivery and reusable helper modules (`Authenticate.py`, `runxdash.py`, `database_handling.py`, `sendEmail.py`) that encapsulate login, analytics, database calls, and messaging.
 
@@ -71,7 +71,7 @@ streamlit run app.py
 ```
 1. Authenticate with a subscriber email (must exist in WordPress DB and have an active plan).
 2. Enter the OTP sent via email. Verified sessions receive a signed cookie for short-lived re-authentication.
-3. Use the **Upload** tab to provide the X/Twitter CSV export. The file is stored as `source_data.csv` so subsequent tabs can use it.
+3. Use the **Upload** tab to provide the X/Twitter CSV export. The data is kept only in your active browser tab; closing the tab clears it for everyone.
 
 ### Demo Mode (No Authentication)
 If you only want to explore the dashboard locally without connecting to MySQL, MongoDB, SMTP, or WordPress subscribers, enable demo mode. This skips the entire login/OTP workflow and signs you in with a placeholder email.
@@ -128,7 +128,6 @@ Ensure environment variables/secrets are injected via compose overrides or an or
 | `nginx.conf` | Example reverse-proxy configuration. |
 
 ## Development Tips
-- Use `streamlit cache clear` or delete `source_data.csv` when switching datasets.
 - Toggle the "Discard Outliers" switch inside the Time Analysis tab to see how IQR filtering affects charts.
 - If the OTP email is throttled, `check_recent_otp` enforces a 90-second cooldown—surface the countdown via `st.error` to improve UX.
 - Add tests or logging before touching `database_handling.py`; it opens live connections to external services.

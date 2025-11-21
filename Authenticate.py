@@ -179,6 +179,8 @@ class Authenticate:
                 st.session_state.email_found = None 
                 st.session_state.auth_status = None
                 del st.session_state.auth_status
+                st.session_state.pop("uploaded_df", None)
+                st.session_state.pop("upload_cleanup_done", None)
                 if os.path.exists("source_data.csv"):
                     os.remove("source_data.csv")
                 print('----------------------------')
